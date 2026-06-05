@@ -2,25 +2,47 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>PDF App</title>
+<title>A2 PDF App</title>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+
 body{
   margin:0;
-  background:black;
-  overflow:hidden;
   font-family:'Cairo',sans-serif;
-  touch-action:none;
+  background:#050816;
+  color:white;
+  overflow:hidden;
 }
 
-/* viewer full screen */
-.box{
-  width:100%;
+/* header */
+header{
+  padding:14px;
+  text-align:center;
+  font-size:20px;
+  font-weight:900;
+  background:linear-gradient(90deg,#2563eb,#7c3aed,#06b6d4);
+  box-shadow:0 5px 20px rgba(0,0,0,.4);
+}
+
+/* viewer */
+.viewer{
   height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
+}
+
+/* box full screen */
+.box{
+  width:100%;
+  height:100vh;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
   overflow:hidden;
+  position:relative;
 }
 
 /* image full screen style */
@@ -29,30 +51,45 @@ img{
   max-height:100vh;
   object-fit:contain;
   transform-origin:center;
-  transition:transform 0.1s ease;
+  transition:transform 0.08s ease;
+  border-radius:10px;
 }
 
 /* page number */
 .num{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  background:rgba(0,0,0,0.6);
-  color:white;
-  padding:6px 10px;
-  border-radius:8px;
+  position:absolute;
+  bottom:15px;
+  left:15px;
+  background:rgba(0,0,0,.7);
+  padding:6px 12px;
+  border-radius:10px;
   font-size:14px;
+  backdrop-filter:blur(5px);
+}
+
+/* hint */
+.hint{
+  position:absolute;
+  top:60px;
+  width:100%;
+  text-align:center;
+  font-size:12px;
+  opacity:0.5;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <img id="img">
-</div>
+<header>📘 A2 PDF Viewer Pro</header>
+<div class="hint">👆 اسحب يمين/شمال + كبّر بصباعين</div>
 
-<div class="num" id="num"></div>
+<div class="viewer">
+  <div class="box">
+    <img id="img">
+    <div class="num" id="num"></div>
+  </div>
+</div>
 
 <script>
 
@@ -72,7 +109,7 @@ const images = [
 
 let i = 0;
 let scale = 1;
-let startDist = null;
+let lastScale = 1;
 
 const img = document.getElementById("img");
 const num = document.getElementById("num");
@@ -80,13 +117,12 @@ const num = document.getElementById("num");
 function show(){
   img.src = images[i];
   img.style.transform = `scale(${scale})`;
-  num.innerText = `${i+1} / ${images.length}`;
+  num.innerText = `Page ${i+1} / ${images.length}`;
 }
 
 function next(){
   if(i < images.length-1){
     i++;
-    scale = 1;
     show();
   }
 }
@@ -94,7 +130,6 @@ function next(){
 function prev(){
   if(i > 0){
     i--;
-    scale = 1;
     show();
   }
 }
@@ -103,20 +138,27 @@ function prev(){
 let startX = 0;
 
 img.addEventListener("touchstart", e=>{
-  if(e.touches.length == 1)
+  if(e.touches.length === 1){
     startX = e.touches[0].clientX;
+  }
 });
 
-/* swipe left/right */
+/* swipe end */
 img.addEventListener("touchend", e=>{
   let endX = e.changedTouches[0].clientX;
 
-  if(startX - endX > 60) next();
-  if(endX - startX > 60) prev();
+  if(startX - endX > 60){
+    next();
+  }
+  if(endX - startX > 60){
+    prev();
+  }
 });
 
 /* pinch zoom */
-document.addEventListener("touchmove", function(e){
+const box = document.querySelector(".box");
+
+box.addEventListener("touchmove", function(e){
   if(e.touches.length === 2){
 
     let dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -124,9 +166,9 @@ document.addEventListener("touchmove", function(e){
 
     let dist = Math.sqrt(dx*dx + dy*dy);
 
-    if(!startDist) startDist = dist;
+    if(!this.startDist) this.startDist = dist;
 
-    scale = (dist / startDist);
+    scale = (dist / this.startDist) * lastScale;
 
     if(scale < 1) scale = 1;
     if(scale > 4) scale = 4;
@@ -135,8 +177,9 @@ document.addEventListener("touchmove", function(e){
   }
 });
 
-document.addEventListener("touchend", ()=>{
-  startDist = null;
+box.addEventListener("touchend", ()=>{
+  lastScale = scale;
+  box.startDist = null;
 });
 
 show();
