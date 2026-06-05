@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>A2 PDF App</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+
+body{
+  margin:0;
+  font-family:'Cairo',sans-serif;
+  background:#0b0f19;
+  color:white;
+  user-select:none;
+  touch-action:pan-y;
+}
+
+/* Header */
+header{
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+  background:linear-gradient(90deg,#2563eb,#7c3aed);
+}
+
+/* tools */
+.tools{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:10px;
+}
+
+button{
+  padding:10px 12px;
+  border:0;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  background:#1f2937;
+  color:white;
+}
+
+/* viewer */
+.viewer{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:75vh;
+}
+
+/* image */
+.box{
+  width:95%;
+  max-width:900px;
+  background:white;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,.6);
+  position:relative;
+}
+
+img{
+  width:100%;
+  display:block;
+  transition:transform 0.2s ease;
+}
+
+/* page number */
+.num{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  background:black;
+  padding:5px 10px;
+  border-radius:8px;
+}
+
+/* navigation hint */
+.hint{
+  text-align:center;
+  font-size:12px;
+  opacity:0.6;
+  margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📘 A2 PDF App</header>
+
+<div class="tools">
+  <button onclick="prev()">⬅</button>
+  <button onclick="next()">➡</button>
+  <button onclick="zoomIn()">➕</button>
+  <button onclick="zoomOut()">➖</button>
+  <button onclick="resetZoom()">Reset</button>
+</div>
+
+<div class="hint">اسحب يمين/شمال 👈👉 للتنقل</div>
+
+<div class="viewer">
+  <div class="box">
+    <img id="img">
+    <div class="num" id="num"></div>
+  </div>
+</div>
+
+<script>
+
+const images = [
+"WhatsApp Image 2026-06-04 at 22.23.23.jpeg",
+"WhatsApp Image 2026-06-04 at 22.35.25.jpeg",
+"WhatsApp Image 2026-06-04 at 22.38.16.jpeg",
+"WhatsApp Image 2026-06-04 at 22.42.57.jpeg",
+"WhatsApp Image 2026-06-04 at 22.45.35.jpeg",
+"WhatsApp Image 2026-06-04 at 22.50.16.jpeg",
+"WhatsApp Image 2026-06-04 at 22.56.30.jpeg",
+"WhatsApp Image 2026-06-04 at 23.00.41.jpeg",
+"WhatsApp Image 2026-06-04 at 23.50.16.jpeg",
+"WhatsApp Image 2026-06-04 at 23.56.47.jpeg",
+"WhatsApp Image 2026-06-04 at 23.59.55.jpeg"
+];
+
+let i = 0;
+let zoom = 1;
+
+const img = document.getElementById("img");
+const num = document.getElementById("num");
+
+function show(){
+  img.src = images[i];
+  img.style.transform = `scale(${zoom})`;
+  num.innerText = `${i+1} / ${images.length}`;
+}
+
+function next(){
+  if(i < images.length-1){
+    i++;
+    show();
+  }
+}
+
+function prev(){
+  if(i > 0){
+    i--;
+    show();
+  }
+}
+
+function zoomIn(){
+  zoom += 0.1;
+  img.style.transform = `scale(${zoom})`;
+}
+
+function zoomOut(){
+  if(zoom > 0.3){
+    zoom -= 0.1;
+    img.style.transform = `scale(${zoom})`;
+  }
+}
+
+function resetZoom(){
+  zoom = 1;
+  img.style.transform = `scale(1)`;
+}
+
+/* 🔥 SWIPE */
+let startX = 0;
+
+img.addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+
+img.addEventListener("touchend", e=>{
+  let endX = e.changedTouches[0].clientX;
+
+  if(startX - endX > 50){
+    next(); // swipe left
+  }
+
+  if(endX - startX > 50){
+    prev(); // swipe right
+  }
+});
+
+show();
+
+</script>
+
+</body>
+</html>
