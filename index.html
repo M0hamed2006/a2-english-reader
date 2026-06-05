@@ -2,113 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>A2 PDF App</title>
+<title>PDF App</title>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-
 body{
   margin:0;
+  background:black;
+  overflow:hidden;
   font-family:'Cairo',sans-serif;
-  background:#0b0f19;
-  color:white;
-  user-select:none;
-  touch-action:pan-y;
+  touch-action:none;
 }
 
-/* Header */
-header{
-  padding:15px;
-  text-align:center;
-  font-size:22px;
-  font-weight:900;
-  background:linear-gradient(90deg,#2563eb,#7c3aed);
-}
-
-/* tools */
-.tools{
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-  padding:10px;
-}
-
-button{
-  padding:10px 12px;
-  border:0;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-  background:#1f2937;
-  color:white;
-}
-
-/* viewer */
-.viewer{
+/* viewer full screen */
+.box{
+  width:100%;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:75vh;
-}
-
-/* image */
-.box{
-  width:95%;
-  max-width:900px;
-  background:white;
-  border-radius:12px;
   overflow:hidden;
-  box-shadow:0 10px 40px rgba(0,0,0,.6);
-  position:relative;
 }
 
+/* image full screen style */
 img{
-  width:100%;
-  display:block;
-  transition:transform 0.2s ease;
+  max-width:100%;
+  max-height:100vh;
+  object-fit:contain;
+  transform-origin:center;
+  transition:transform 0.1s ease;
 }
 
 /* page number */
 .num{
-  position:absolute;
+  position:fixed;
   bottom:10px;
   left:10px;
-  background:black;
-  padding:5px 10px;
+  background:rgba(0,0,0,0.6);
+  color:white;
+  padding:6px 10px;
   border-radius:8px;
-}
-
-/* navigation hint */
-.hint{
-  text-align:center;
-  font-size:12px;
-  opacity:0.6;
-  margin-bottom:10px;
+  font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<header>📘 A2 PDF App</header>
-
-<div class="tools">
-  <button onclick="prev()">⬅</button>
-  <button onclick="next()">➡</button>
-  <button onclick="zoomIn()">➕</button>
-  <button onclick="zoomOut()">➖</button>
-  <button onclick="resetZoom()">Reset</button>
+<div class="box">
+  <img id="img">
 </div>
 
-<div class="hint">اسحب يمين/شمال 👈👉 للتنقل</div>
-
-<div class="viewer">
-  <div class="box">
-    <img id="img">
-    <div class="num" id="num"></div>
-  </div>
-</div>
+<div class="num" id="num"></div>
 
 <script>
 
@@ -127,20 +71,22 @@ const images = [
 ];
 
 let i = 0;
-let zoom = 1;
+let scale = 1;
+let startDist = null;
 
 const img = document.getElementById("img");
 const num = document.getElementById("num");
 
 function show(){
   img.src = images[i];
-  img.style.transform = `scale(${zoom})`;
+  img.style.transform = `scale(${scale})`;
   num.innerText = `${i+1} / ${images.length}`;
 }
 
 function next(){
   if(i < images.length-1){
     i++;
+    scale = 1;
     show();
   }
 }
@@ -148,44 +94,49 @@ function next(){
 function prev(){
   if(i > 0){
     i--;
+    scale = 1;
     show();
   }
 }
 
-function zoomIn(){
-  zoom += 0.1;
-  img.style.transform = `scale(${zoom})`;
-}
-
-function zoomOut(){
-  if(zoom > 0.3){
-    zoom -= 0.1;
-    img.style.transform = `scale(${zoom})`;
-  }
-}
-
-function resetZoom(){
-  zoom = 1;
-  img.style.transform = `scale(1)`;
-}
-
-/* 🔥 SWIPE */
+/* swipe */
 let startX = 0;
 
 img.addEventListener("touchstart", e=>{
-  startX = e.touches[0].clientX;
+  if(e.touches.length == 1)
+    startX = e.touches[0].clientX;
 });
 
+/* swipe left/right */
 img.addEventListener("touchend", e=>{
   let endX = e.changedTouches[0].clientX;
 
-  if(startX - endX > 50){
-    next(); // swipe left
-  }
+  if(startX - endX > 60) next();
+  if(endX - startX > 60) prev();
+});
 
-  if(endX - startX > 50){
-    prev(); // swipe right
+/* pinch zoom */
+document.addEventListener("touchmove", function(e){
+  if(e.touches.length === 2){
+
+    let dx = e.touches[0].clientX - e.touches[1].clientX;
+    let dy = e.touches[0].clientY - e.touches[1].clientY;
+
+    let dist = Math.sqrt(dx*dx + dy*dy);
+
+    if(!startDist) startDist = dist;
+
+    scale = (dist / startDist);
+
+    if(scale < 1) scale = 1;
+    if(scale > 4) scale = 4;
+
+    img.style.transform = `scale(${scale})`;
   }
+});
+
+document.addEventListener("touchend", ()=>{
+  startDist = null;
 });
 
 show();
